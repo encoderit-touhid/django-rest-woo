@@ -4,12 +4,30 @@ from pyexpat import model
 
 from rest_framework import serializers
 from .models import Product, Order, OrderItem,User
-from api.models import Order
+from api.models import Order, Product
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import AccessToken
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+    def validate(self, attrs):
+         data = super().validate(attrs)
+         access_token = self.get_token(self.user).access_token
+         data["expires_in"] = access_token["exp"] - access_token["iat"]
+         data["expires_at"] = access_token["exp"]
+         return data
+class MyRefreshTokenObtainPairSerializer(TokenRefreshSerializer):
+        def validate(self, attrs):
+            data = super().validate(attrs)
+            access_token = AccessToken(data["access"])
+            data["expires_in"] = access_token["exp"] - access_token["iat"]
+            data["expires_at"] = access_token["exp"]
+            return data
 class ProductSerializer(serializers.ModelSerializer):
       class Meta:
           model  = Product
-          fields = ('name','description','price','stock')
+          fields = ('id','name','description','price','stock')
       
       def validate_price(self,value):
            if value <= 0:

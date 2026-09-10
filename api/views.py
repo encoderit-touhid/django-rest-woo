@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from api.models import Order, Product
-from api.serializers import ProductSerializer,OrderSerializer,ProductInforSerializer,OrderItem,OrderItemSerializer
+from api.serializers import ProductSerializer, OrderSerializer, ProductInforSerializer, OrderItem, OrderItemSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.template.context_processors import request
@@ -61,7 +61,8 @@ def product_details(request,pk):
 @api_view(['GET'])
 def order_list(request):
     Orders =Order.objects.prefetch_related('items','items__product','user').all()
-    # Orders =Order.objects.select_related('items','items__product','user').all()
+    # Orders =Order.objects.prefetch_related('items').select_related('items__product').all() // not working
+    # Orders =Order.objects.select_related('items','items__product','user').all() // not working
     # for order in Orders:
     #     for product in order.products.all():
     #         print(f"product name {product.name}")
