@@ -1,6 +1,7 @@
 from itertools import product
 
 from django.http import JsonResponse
+from django_filters import FilterSet
 from api.models import Order, Product
 from api.serializers import ProductSerializer,OrderSerializer,ProductInforSerializer,OrderItem,OrderItemSerializer
 from rest_framework.response import Response
@@ -62,11 +63,13 @@ class ProductCreatAPIview(generics.CreateAPIView):
 class ProductListCreatAPIview(generics.ListCreateAPIView):
         queryset = Product.objects.all()
         serializer_class = ProductSerializer
+        filterset_fields = ('name','description','price')
+        
         def get_permissions(self):
-             self.permission_classes=[AllowAny]
-             if self.request.method == 'POST':
-                  self.permission_classes=[IsAdminUser]
-             return super().get_permissions()        
+            self.permission_classes=[AllowAny]
+            if self.request.method in ('POST') :
+                self.permission_classes=[IsAdminUser]
+            return super().get_permissions()     
          
 
 class ProductRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView): #auto Get Method
