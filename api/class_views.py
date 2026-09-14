@@ -1,7 +1,10 @@
 from itertools import product
+from re import search
 
 from django.http import JsonResponse
+from api.views import order_items
 from django_filters import FilterSet
+from django_filters.rest_framework import DjangoFilterBackend
 from api.models import Order, Product
 from api.serializers import ProductSerializer,OrderSerializer,ProductInforSerializer,OrderItem,OrderItemSerializer
 from rest_framework.response import Response
@@ -11,12 +14,13 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from django.db.models import Max
 from rest_framework import generics
+from rest_framework import filters
 from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
 from api.post_serializer import ProductPostSerializer
-
+from api.filters import ProductFilter, InStockProductFilterBackend,ProductPagination
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView 
 from .serializers import MyTokenObtainPairSerializer, MyRefreshTokenObtainPairSerializer
-
+from rest_framework.pagination import PageNumberPagination,LimitOffsetPagination
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -63,7 +67,23 @@ class ProductCreatAPIview(generics.CreateAPIView):
 class ProductListCreatAPIview(generics.ListCreateAPIView):
         queryset = Product.objects.all()
         serializer_class = ProductSerializer
-        filterset_fields = ('name','description','price')
+        # filterset_fields = ('name','description','price')
+        filterset_class = ProductFilter
+        filter_backends = [DjangoFilterBackend,
+                           filters.SearchFilter,
+                           filters.OrderingFilter,
+                           InStockProductFilterBackend]
+        #search_fields = ('=name','description') to exact Match
+        search_fields = ('name','description')
+        ordering_fields = ('name','price','stock')
+        # pagination_class = PageNumberPagination
+        # pagination_class.page_size = 2
+        # pagination_class.page_query_param='page_num'
+        # pagination_class.page_size_query_param='size'
+        # pagination_class.max_page_size=6
+        # pagination_class = ProductPagination
+        pagination_class = LimitOffsetPagination
+       
         
         def get_permissions(self):
             self.permission_classes=[AllowAny]
@@ -82,9 +102,9 @@ class ProductRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView): #auto
             self.permission_classes=[IsAdminUser]
         return super().get_permissions()
     def delete(self, request, *args, **kwargs):
-            self.destroy(request, *args, **kwargs)
-            return Response(
-                {
-                    "message": "Deleted successfully."
-                },status=status.HTTP_204_NO_CONTENT
-                )           
+             self.destroy(request, *args, **kwargs)
+             return Response(
+                    {
+                        "message": "Deleted successfully."
+                    },status=status.HTTP_204_NO_CONTENT
+                    )           

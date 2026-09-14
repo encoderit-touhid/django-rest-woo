@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 from . import class_views
 from . import api_views
+from rest_framework.routers import DefaultRouter
+from . import viewsets
 
 urlpatterns = [
     path('products/',views.product_list),
@@ -27,3 +29,6 @@ urlpatterns = [
     
     path('product-details-curd-by-class-id/<int:pk>',class_views.ProductRetrieveUpdateDestroy.as_view(),name="product-details-curd-by-class-id"),
 ]
+router = DefaultRouter()
+router.register(r'order-viewset', viewsets.OrderListViewSet, basename='order-viewset')
+urlpatterns += router.urls
