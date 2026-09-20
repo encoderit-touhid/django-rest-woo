@@ -26,6 +26,7 @@ from rest_framework.decorators import action
 from django.contrib.auth.models import User
 from rest_framework.serializers import Serializer
 from .post_serializer import OrderCreateSerializer
+from api.permissions import IsSelfOrder
 
 class OrderListViewSet(viewsets.ModelViewSet): #auto Get Method
     queryset = Order.objects.prefetch_related('items','items__product','user').all()
@@ -55,3 +56,22 @@ class OrderListViewSet(viewsets.ModelViewSet): #auto Get Method
         orders=self.get_queryset().filter(user=request.user)
         serializer = self.get_serializer(orders,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    @action(detail=True,methods=['PUT'],permission_classes=[IsAdminUser|IsSelfOrder],url_path='update-single-order-status-only')
+    def update_single_order_status_only(self, request, pk=None):
+            order = self.get_object()
+            new_status = request.data.get('status')
+            valid_statuses = dict(Order.StatusChoices.choices)
+            if new_status not in valid_statuses:
+                return Response({'status': f'Invalid status. Must be one of {list(valid_statuses)}'},status=status.HTTP_400_BAD_REQUEST)
+            order.status = new_status
+            order.save(update_fields=['status'])
+            serializer = self.get_serializer(order)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        
+    @action(detail=False,methods=['get'],permission_classes=[AllowAny],url_path='test/(?P<id>[0-9]+)/(?P<name>[^/.]+)')
+    def test_id_name(self, request, id, name):
+        return Response({
+            'id': id,
+            'name': name
+            },status=status.HTTP_200_OK)
